@@ -7,6 +7,7 @@ import {
     laundryQueryOptions,
     mealsQueryContract,
     mealsQueryOptions,
+    mealsRefreshIntervalMs,
 } from './campus-query-options';
 
 const laundrySnapshot: DashboardLaundrySnapshot = {
@@ -69,8 +70,19 @@ describe('campus query options', () => {
 
         expect(options.queryKey).toBe(mealsQueryContract.queryKey);
         expect(options.staleTime).toBe(mealsQueryContract.freshnessMs);
-        expect(options.refetchInterval).toBe(mealsQueryContract.freshnessMs);
+        expect(typeof options.refetchInterval).toBe('function');
         await expect(options.queryFn?.({} as never)).resolves.toEqual(mealsSnapshot);
         expect(getPublicMeals).toHaveBeenCalledOnce();
+    });
+
+    it('refreshes meals every minute just before lunch and dinner (KST)', () => {
+        const at = (kst: string) => mealsRefreshIntervalMs(new Date(`${kst}+09:00`));
+        expect(at('2026-11-26T11:50:00')).toBe(60_000);
+        expect(at('2026-11-26T11:59:59')).toBe(60_000);
+        expect(at('2026-11-26T17:55:00')).toBe(60_000);
+        expect(at('2026-11-26T12:00:00')).toBe(mealsQueryContract.freshnessMs);
+        expect(at('2026-11-26T09:00:00')).toBe(mealsQueryContract.freshnessMs);
+        expect(at('2026-11-26T11:47:00')).toBe(3 * 60_000);
+        expect(at('2026-11-26T23:00:00')).toBe(mealsQueryContract.freshnessMs);
     });
 });

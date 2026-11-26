@@ -33,6 +33,8 @@ DO $$ BEGIN
 END $$;
 SELECT cron.schedule('jb-laundry','* * * * *',$job$SELECT jb.dispatch_job('collect-laundry')$job$);
 SELECT cron.schedule('jb-meals','*/5 * * * *',$job$SELECT jb.dispatch_job('collect-meals')$job$);
+-- 식사 직전(KST 11:50~11:59, 17:50~17:59)에는 1분 단위로 수집한다. pg_cron은 UTC 기준이다.
+SELECT cron.schedule('jb-meals-mealtime','50-59 2,8 * * *',$job$SELECT jb.dispatch_job('collect-meals')$job$);
 SELECT cron.schedule('jb-meals-continue','10 seconds',$job$
   SELECT jb.dispatch_job('collect-meals') WHERE EXISTS(SELECT 1 FROM jb.maintenance_state WHERE name IN ('collector:meals-include-pinned:cursor','collector:meals-default:cursor'))
 $job$);

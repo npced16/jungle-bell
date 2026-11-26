@@ -14,6 +14,16 @@ Deno.test("Kakao headings distinguish weekly, lunch, dinner and pinned notices",
   assertEquals(classifyMeal("중식 및 석식 메뉴 안내", "", false, reference).category, "OTHER");
   assertEquals(classifyMeal("중식 메뉴 / 석식 메뉴", "", false, reference).category, "OTHER");
 });
+Deno.test("titled weekday mismatch falls back to the matching publish date", () => {
+  const published = Date.parse("2026-11-25T17:41:46+09:00");
+  assertEquals(classifyMeal("11월 26일 (수) 석식 메뉴", "", false, published).mealDate, "2026-11-25");
+  assertEquals(classifyMeal("11월 26일 (목) 중식 메뉴", "", false, published).mealDate, "2026-11-26");
+  assertEquals(classifyMeal("11월 26일 석식 메뉴", "", false, published).mealDate, "2026-11-26");
+  assertEquals(
+    classifyMeal("11월 26일 (금) 석식 메뉴", "", false, published).mealDate,
+    "2026-11-26",
+  );
+});
 Deno.test("meal dates require an explicit valid date and resolve the nearest year", () => {
   assertEquals(classifyMeal("석식 메뉴", "", false, reference).mealDate, null);
   assertEquals(classifyMeal("2월 30일 중식 메뉴", "", false, reference).mealDate, null);
