@@ -9,6 +9,7 @@ import {
     buildApiOrigin,
     bypassDevApiModuleRequest,
     defaultDevApiOrigin,
+    devApiPrefix,
     type FrontendTarget,
     normalizeDevApiOrigin,
     tauriDevOrigin,
@@ -23,12 +24,14 @@ async function interpretedConfig(
 ): Promise<ResolvedConfig> {
     const keys = [
         'JUNGLE_BELL_DEV_API_ORIGIN',
+        'JUNGLE_BELL_DEV_API_PREFIX',
         'JUNGLE_BELL_DATA_API_URL',
         'TAURI_ENV_PLATFORM',
         'TAURI_DEV_HOST',
     ] as const;
     const previous = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
     delete process.env.JUNGLE_BELL_DEV_API_ORIGIN;
+    delete process.env.JUNGLE_BELL_DEV_API_PREFIX;
     delete process.env.JUNGLE_BELL_DATA_API_URL;
     delete process.env.TAURI_ENV_PLATFORM;
     delete process.env.TAURI_DEV_HOST;
@@ -66,7 +69,10 @@ test('웹 개발 Vite 설정은 API proxy와 web build target을 사용한다', 
     assert.equal(proxy.changeOrigin, true);
     assert.equal(proxy.secure, true);
     assert.deepEqual(proxy.headers, {origin: defaultDevApiOrigin});
-    assert.equal(config.cacheDir, resolve(import.meta.dirname, '../../../node_modules/.vite'));
+    assert.equal(
+        resolve(config.cacheDir),
+        resolve(import.meta.dirname, '../../../node_modules/.vite'),
+    );
 });
 
 test('웹 production 빌드는 same-origin API와 전용 산출물 경로를 사용한다', async () => {
@@ -192,4 +198,30 @@ test('개발 API proxy는 src/api 모듈 요청을 Vite 변환기로 넘긴다',
     );
     assert.equal(bypassDevApiModuleRequest('/api/public/status'), undefined);
     assert.equal(bypassDevApiModuleRequest('/api/v2/files/example.ts'), undefined);
+});
+
+test('Supabase 개발 proxy는 API 경로와 query 및 브라우저 Origin을 보존한다', async () => {
+    const config = await interpretedConfig('serve', 'web', {
+        JUNGLE_BELL_DEV_API_ORIGIN: 'http://127.0.0.1:54321',
+        JUNGLE_BELL_DEV_API_PREFIX: '/functions/v1/api',
+    });
+    for (const key of ['/api', '/api/me']) {
+        const proxy = config.server.proxy?.[key];
+        assert.ok(proxy && typeof proxy !== 'string');
+        assert.equal(proxy.target, 'http://127.0.0.1:54321');
+        assert.equal(proxy.headers, undefined);
+        assert.equal(
+            proxy.rewrite?.('/api/me/notifications?limit=20&cursor=a%2Bb'),
+            '/functions/v1/api/api/me/notifications?limit=20&cursor=a%2Bb',
+        );
+    }
+});
+
+test('개발 함수 prefix는 고정된 api 함수 경로만 허용한다', () => {
+    assert.equal(devApiPrefix(undefined), '');
+    assert.equal(devApiPrefix(''), '');
+    assert.equal(devApiPrefix('/functions/v1/api'), '/functions/v1/api');
+    for (const invalid of ['/functions/v1/worker', '//evil.test', '/functions/v1/api/', '/../']) {
+        assert.throws(() => devApiPrefix(invalid), /JUNGLE_BELL_DEV_API_PREFIX_INVALID/u);
+    }
 });

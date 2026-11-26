@@ -7,6 +7,8 @@ interface MealRecord {
     title: string | null;
     publishedAt: string | null;
     firstSeenAt?: string | null;
+    mealDate?: string | null;
+    mealPeriod?: 'LUNCH' | 'DINNER' | null;
 }
 
 interface MealsSnapshot<RecordType extends MealRecord> {
@@ -38,6 +40,7 @@ export function kstDateKey(reference: Date): string {
 }
 
 export function mealServiceDate(meal: MealRecord, reference = new Date()): string | null {
+    if (meal.mealDate !== undefined) return meal.mealDate;
     const timestamp = meal.publishedAt ?? meal.firstSeenAt ?? null;
     const anchor = timestamp ? new Date(timestamp) : reference;
     const validAnchor = Number.isFinite(anchor.getTime()) ? anchor : reference;
@@ -65,6 +68,15 @@ export function mealServiceDate(meal: MealRecord, reference = new Date()): strin
         : null;
 }
 
+export function mealRecordPeriod(
+    meal: Pick<MealRecord, 'title' | 'mealPeriod'>,
+): ReturnType<typeof mealPeriodLabel> {
+    if (meal.mealPeriod === 'LUNCH') return '중식';
+    if (meal.mealPeriod === 'DINNER') return '석식';
+    if (meal.mealPeriod === null) return '식단';
+    return mealPeriodLabel(meal.title);
+}
+
 export function selectTodayMeals<RecordType extends MealRecord>(
     snapshot: MealsSnapshot<RecordType>,
     reference = new Date(),
@@ -76,7 +88,9 @@ export function selectTodayMeals<RecordType extends MealRecord>(
     }
     return [...unique.values()]
         .filter((meal) => mealServiceDate(meal, reference) === todayKey)
-        .sort((left, right) => mealOrder(left.title) - mealOrder(right.title));
+        .sort(
+            (left, right) => mealOrder(mealRecordPeriod(left)) - mealOrder(mealRecordPeriod(right)),
+        );
 }
 
 function calendarDateKey(year: number, month: number, day: number): string | null {

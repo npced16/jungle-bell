@@ -38,17 +38,27 @@ export function normalizeExternalUrl(value: string): string {
         throw new Error('EXTERNAL_URL_NOT_ALLOWED');
     }
     const localMealAsset = isLocalMealAsset(url);
+    const ownFeedback =
+        url.hostname === 'github.com' &&
+        url.pathname === '/npced16/jungle-bell/issues/new' &&
+        url.search === '?template=feature_request.yml' &&
+        url.hash === '';
     if (
         (!localMealAsset && url.protocol !== 'https:') ||
         url.username !== '' ||
         url.password !== '' ||
         (!localMealAsset && url.port !== '') ||
-        url.search !== ''
+        (url.search !== '' && !ownFeedback)
     ) {
         throw new Error('EXTERNAL_URL_NOT_ALLOWED');
     }
 
     const allowed =
+        ownFeedback ||
+        (url.hostname === 'github.com' &&
+            (url.pathname === '/npced16/jungle-bell' ||
+                url.pathname === '/npced16/jungle-bell/issues/new/choose') &&
+            url.hash === '') ||
         (url.hostname === 'github.com' &&
             ((url.pathname === PROJECT_PATH &&
                 (url.hash === '' || url.hash === INSTALL_GUIDE_FRAGMENT)) ||
@@ -60,7 +70,8 @@ export function normalizeExternalUrl(value: string): string {
             url.hash === '') ||
         (url.hostname === 'pf.kakao.com' && MEAL_POST_PATH.test(url.pathname) && url.hash === '') ||
         localMealAsset ||
-        (url.hostname === 'jungle-bell.sijun-yang.com' &&
+        ((url.hostname === 'jungle-bell.sijun-yang.com' ||
+            url.hostname === 'jungle-bell.vercel.app') &&
             MEAL_ASSET_PATH.test(url.pathname) &&
             url.hash === '');
     if (!allowed) throw new Error('EXTERNAL_URL_NOT_ALLOWED');

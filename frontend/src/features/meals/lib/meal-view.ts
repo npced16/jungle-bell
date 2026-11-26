@@ -1,5 +1,5 @@
 import type {DashboardMealPost, DashboardWeeklyMealMenu} from '@/api/dashboard-api';
-import {mealPeriodLabel, mealServiceDate} from '@/domain/meals/today';
+import {mealPeriodLabel, mealRecordPeriod, mealServiceDate} from '@/domain/meals/today';
 
 const DAY_MS = 24 * 60 * 60 * 1_000;
 
@@ -137,7 +137,7 @@ const TODAY_MEAL_PERIODS: readonly TodayMealPeriod[] = ['\uC911\uC2DD', '\uC11D\
 export function todayMealSlots(meals: readonly DashboardMealPost[]): TodayMealSlot[] {
     return TODAY_MEAL_PERIODS.map((period) => ({
         period,
-        meal: meals.find((meal) => mealPeriodLabel(meal.title) === period) ?? null,
+        meal: meals.find((meal) => mealRecordPeriod(meal) === period) ?? null,
     }));
 }
 
@@ -201,7 +201,7 @@ function mealPeriodOrder(title: string | null): number {
 }
 
 function compareMealPeriod(left: DashboardMealPost, right: DashboardMealPost): number {
-    return mealPeriodOrder(left.title) - mealPeriodOrder(right.title);
+    return mealPeriodOrder(mealRecordPeriod(left)) - mealPeriodOrder(mealRecordPeriod(right));
 }
 
 function calendarDateKey(year: number, month: number, day: number): string | null {

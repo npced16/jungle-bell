@@ -17,6 +17,7 @@ import {cn} from '@/lib/utils';
 import {useCampusManualRefresh, useSuspenseMealsQuery} from '@/state/use-dashboard-queries';
 
 import {MealHistorySection} from '../components/meal-history-section';
+import {MealPostGroups} from '../components/meal-post-groups';
 import {TodayMealGrid} from '../components/today-meal-grid';
 import {WeeklyMealMenu} from '../components/weekly-meal-menu';
 import {
@@ -294,6 +295,8 @@ export function MealsPage() {
                                     )}
                                 </section>
 
+                                <MealPostGroups meals={meals.data} />
+
                                 {historyHasContent ? (
                                     <MealHistorySection meals={meals.data} />
                                 ) : (
@@ -359,7 +362,10 @@ export function MealsPageBoundary({children, manualRefresh}: MealsPageBoundaryPr
         manualRefreshError: manualRefreshFailureIsCurrent,
         todayHasContent: todayMeals.length > 0,
         weeklyHasContent: weeklyMeal !== null,
-        historyHasContent: !sections.historyEmpty,
+        historyHasContent:
+            !sections.historyEmpty ||
+            (meals.data.data.otherPosts?.length ?? 0) > 0 ||
+            (meals.data.data.weeklyPosts?.length ?? 0) > 0,
         isOffline,
         recovered,
     });

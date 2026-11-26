@@ -56,11 +56,12 @@ describe('개인정보 처리방침', () => {
         expect(markup).toContain('4. 사용 통계 설정과 수집 거부');
         expect(markup).toContain('aria-label="익명 방문 통계 수집"');
         expect(markup).toContain('일별 집계 결과는 설정 변경을 이유로 역으로 삭제하지');
-        expect(markup).toContain('개인정보 보호책임자');
-        expect(markup).toContain('양시준');
-        expect(markup).toContain('href="mailto:yangsijun5528@gmail.com"');
+        expect(markup).not.toContain('양시준');
+        expect(markup).not.toContain('href="mailto:yangsijun5528@gmail.com"');
+        expect(markup).toContain('href="https://github.com/npced16/jungle-bell"');
+        expect(markup).toContain('공개 이슈에는 개인정보를 적지 마세요.');
         expect(markup).toContain('변경 고지 방법: 앱 내 공지');
-        expect(markup.match(/min-h-\(--hit-area-min\)/gu)?.length ?? 0).toBeGreaterThanOrEqual(5);
+        expect(markup.match(/min-h-\(--hit-area-min\)/gu)?.length ?? 0).toBeGreaterThanOrEqual(4);
     });
 
     test('통계 식별 단위와 계정 설정 정책을 실제 동작대로 고지한다', () => {

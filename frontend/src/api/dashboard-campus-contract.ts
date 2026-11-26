@@ -259,6 +259,9 @@ function mealPostSchema(expectedAssetOrigin: string | null) {
     return z.object({
         id: textSchema(128),
         kind: z.enum(['PINNED_MENU', 'DAILY_MENU', 'OTHER']).optional(),
+        category: z.enum(['WEEKLY_MENU', 'DAILY_MENU', 'OTHER']).optional(),
+        mealPeriod: z.enum(['LUNCH', 'DINNER']).nullable().optional(),
+        mealDate: calendarDateSchema.nullable().optional(),
         contentSha: mealShaSchema.optional(),
         title: textSchema(1_024).nullable(),
         text: z.string().max(100_000),
@@ -331,6 +334,8 @@ function dashboardMealsSnapshotSchema(expectedAssetOrigin: string | null) {
             dailyMenus: z.array(mealPostSchema(expectedAssetOrigin)).max(128),
             pinnedMenus: z.array(mealPostSchema(expectedAssetOrigin)).max(128),
             recentMenus: z.array(mealPostSchema(expectedAssetOrigin)).max(128),
+            weeklyPosts: z.array(mealPostSchema(expectedAssetOrigin)).max(128).optional(),
+            otherPosts: z.array(mealPostSchema(expectedAssetOrigin)).max(128).optional(),
             currentWeeklyMenu: currentWeeklyMealMenuSchema(expectedAssetOrigin).nullable(),
             weeklyMenus: z.array(weeklyMealMenuSchema(expectedAssetOrigin)).max(100),
         }),

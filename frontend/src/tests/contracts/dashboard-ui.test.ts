@@ -120,8 +120,8 @@ test('홈은 PC·PWA 출석 요약과 일반 웹 앱 소개를 구분하고 오�
     for (const title of ['세탁실', '오늘 급식']) {
         assert.match(home, new RegExp(`title="${title}"`));
     }
-    assert.match(home, /platform\.kind === 'desktop' \|\| platform\.pwa\.installed/);
-    assert.match(home, /<JungleCampusSummary\s*\/>[\s\S]*<AppShowcaseCard\s*\/>/);
+    assert.match(home, /platform\.kind === 'desktop'/);
+    assert.doesNotMatch(home, /<AppShowcaseCard|<ServiceEndNoticeBanner/);
     assert.doesNotMatch(home, /onRequestInstall/);
     assert.match(appShowcase, /data-app-showcase-card="true"/);
     assert.match(appShowcase, /PC·모바일 앱을 설치해[\s\S]*더 편리하게 사용하세요\./);

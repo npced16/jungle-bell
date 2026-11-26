@@ -63,6 +63,12 @@ export function bypassDevApiModuleRequest(url: string | undefined): string | und
     return undefined;
 }
 
+export function devApiPrefix(value: string | undefined): '' | '/functions/v1/api' {
+    if (value === undefined || value === '') return '';
+    if (value === '/functions/v1/api') return value;
+    throw new Error('JUNGLE_BELL_DEV_API_PREFIX_INVALID');
+}
+
 export function tauriDevOrigin(target: FrontendTarget): string | null {
     return target === 'desktop' ? 'http://127.0.0.1:5173' : null;
 }
@@ -155,6 +161,8 @@ export default defineConfig(({command, mode}) => {
                   )
             : null;
     const developmentTauriOrigin = command === 'serve' ? tauriDevOrigin(target) : null;
+    const apiPrefix =
+        command === 'serve' ? devApiPrefix(process.env.JUNGLE_BELL_DEV_API_PREFIX) : '';
     const define: Record<string, string> = {
         __JUNGLE_BELL_TARGET__: JSON.stringify(target),
         __JUNGLE_BELL_BUILD_CONFIG__: JSON.stringify(
@@ -215,6 +223,7 @@ export default defineConfig(({command, mode}) => {
                               target: devApiOrigin as string,
                               changeOrigin: true,
                               secure: true,
+                              rewrite: (path) => `${apiPrefix}${path}`,
                               ...(developmentTauriOrigin
                                   ? {headers: {origin: developmentTauriOrigin}}
                                   : {}),
@@ -223,7 +232,9 @@ export default defineConfig(({command, mode}) => {
                               target: devApiOrigin as string,
                               changeOrigin: true,
                               secure: true,
-                              headers: {origin: devApiOrigin as string},
+                              rewrite: (path) => `${apiPrefix}${path}`,
+                              // Supabase validates the caller's Origin against its explicit allowlist.
+                              ...(apiPrefix ? {} : {headers: {origin: devApiOrigin as string}}),
                               bypass: (request) => bypassDevApiModuleRequest(request.url),
                           },
                       },

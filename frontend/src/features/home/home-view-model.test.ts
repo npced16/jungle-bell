@@ -11,6 +11,8 @@ import type {
 import {
     homeAttendanceState,
     homeLaundrySummary,
+    homeLaundryAvailability,
+    homeRecentMeals,
     homeTodayMealSlots,
     homeTodayMeals,
     mealPeriodLabel,
@@ -64,7 +66,7 @@ describe('home feature boundaries', () => {
             /const locallyReliable\s*=\s*snapshot\.quality\.collectorHealthy/u,
         );
         expect(source).toContain('const mealsRefreshFailed = meals.isError');
-        expect(source).toContain('수집 서버 장애로 마지막 정상 상태를 표시합니다.');
+        expect(source).toContain('수집 서버 장애로 현재 사용 가능 여부를 확인할 수 없습니다.');
         expect(source).not.toContain('CardLoading');
         expect(source).not.toContain('CompactError');
     });
@@ -88,9 +90,10 @@ describe('home feature boundaries', () => {
     it('PC와 설치형 PWA에는 출석 요약을, 일반 웹에는 앱 소개를 표시한다', () => {
         const source = readFileSync(new URL('./home-page.tsx', import.meta.url), 'utf8');
 
-        expect(source).toContain("platform.kind === 'desktop' || platform.pwa.installed");
+        expect(source).toContain("platform.kind === 'desktop'");
         expect(source).toContain('<JungleCampusSummary />');
-        expect(source).toContain('<AppShowcaseCard />');
+        expect(source).not.toContain('<AppShowcaseCard />');
+        expect(source).not.toContain('<ServiceEndNoticeBanner />');
         expect(source.indexOf('<AsyncBoundary')).toBeLessThan(
             source.indexOf('{showAttendanceSummary'),
         );
@@ -120,20 +123,34 @@ describe('home feature boundaries', () => {
         expect(source).toContain('<HomeMealSlotsList slots={todayMealSlots} />');
     });
 
-    it('labels laundry capacity as people who can start now', () => {
+    it('shows current appliance counts instead of estimated laundry sessions', () => {
         const source = readFileSync(new URL('./home-page.tsx', import.meta.url), 'utf8');
-
-        expect(source).toContain('남성 가능');
-        expect(source).toContain('여성 가능');
-        expect(source).toContain("laundryZonePresentation('men').surfaceClassName");
-        expect(source).toContain("laundryZonePresentation('women').surfaceClassName");
-        expect(source.match(/지금 시작 가능/g)).toHaveLength(2);
-        expect(source).not.toContain('남성 세탁실');
-        expect(source).not.toContain('여성 세탁실');
+        expect(source).toContain('homeLaundryAvailability');
+        expect(source).toContain('사용 가능한 기기 수');
+        expect(source).toContain('등록 {total}대 중');
+        expect(source).not.toContain('남성 가능');
     });
 });
 
 describe('home meal summaries', () => {
+    it('자정 뒤 어제 메뉴는 오늘에서 제외하고 날짜가 있는 최근 메뉴로만 반환한다', () => {
+        const previousMeal = {
+            id: 'previous',
+            title: null,
+            text: '10월 19일 중식',
+            publishedAt: null,
+            permalink: null,
+            mealPeriod: 'LUNCH' as const,
+            mealDate: '2026-10-19',
+        };
+        const snapshot = mealsSnapshot([previousMeal]);
+        const reference = new Date('2026-10-20T00:01:00+09:00');
+        expect(homeTodayMealSlots(snapshot, reference)).toBeNull();
+        expect(homeRecentMeals(snapshot, reference)).toEqual({
+            date: '2026-10-19',
+            meals: [previousMeal],
+        });
+    });
     it('uses the shared meal date selector and keeps meal order', () => {
         const snapshot = {
             asOf: '2026-08-11T03:00:00.000Z',
@@ -368,6 +385,24 @@ describe('home laundry clock skew', () => {
             },
         };
         const nowMs = Date.parse('2026-09-19T20:35:26.455Z');
+        expect(homeLaundryAvailability(snapshot, nowMs)).toMatchObject({
+            washers: 1,
+            dryers: 0,
+            washerTotal: 1,
+            dryerTotal: 0,
+        });
+        const unknown = {
+            ...snapshot,
+            machines: [
+                {
+                    ...snapshot.machines[0]!,
+                    washer: {...snapshot.machines[0]!.washer!, operationalStatus: 'UNKNOWN'},
+                },
+            ],
+        };
+        expect(homeLaundryAvailability(unknown, nowMs).washers).toBe(0);
+        expect(homeLaundryAvailability(snapshot, nowMs, true).washers).toBeNull();
+        expect(homeLaundryAvailability(snapshot, nowMs + 700_000).washers).toBeNull();
         expect(homeLaundrySummary({snapshot, nowMs})).toEqual({men: 1, women: 0});
         expect(homeLaundrySummary({snapshot, nowMs: Date.parse(snapshot.asOf) - 60_001})).toEqual({
             men: null,

@@ -1,11 +1,10 @@
+import type {DashboardLaundrySnapshot} from '@/api/dashboard-api';
 import {Link} from '@tanstack/react-router';
 import {ArrowRight, RefreshCw, Utensils, WashingMachine, type LucideIcon} from 'lucide-react';
-import type {ReactNode} from 'react';
+import {type ReactNode, useEffect, useState} from 'react';
 
-import {AppShowcaseCard} from '@/components/app-showcase/app-showcase-card';
 import {AsyncBoundary} from '@/components/dashboard/async-boundary';
 import {LoadingState} from '@/components/dashboard/async-state';
-import {laundryZonePresentation} from '@/components/dashboard/laundry-zone-presentation';
 import {PageHeader} from '@/components/dashboard/page-header';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {Button} from '@/components/ui/button';
@@ -19,9 +18,8 @@ import {
 } from '@/state/use-dashboard-queries';
 
 import {HomeMealSlotsList} from './home-meal-slots';
-import {homeLaundrySummary, homeTodayMealSlots} from './home-view-model';
+import {homeTodayMealSlots} from './home-view-model';
 import {JungleCampusSummary} from './jungle-campus-summary';
-import {ServiceEndNoticeBanner} from './service-end-notice-banner';
 
 function SummaryCard({
     icon: Icon,
@@ -56,11 +54,11 @@ function SummaryCard({
     );
 }
 
-function HomeLaundrySummary() {
+type LaundryGridRenderer = (snapshot: DashboardLaundrySnapshot, now: number) => ReactNode;
+
+function HomeLaundrySummary({renderGrid}: {renderGrid?: LaundryGridRenderer}) {
+    const now = useHomeClock();
     const laundry = useSuspenseLaundryQuery();
-    const laundrySummary = homeLaundrySummary({
-        snapshot: laundry.data,
-    });
     const laundryRefreshFailed = laundry.isError;
     const laundryCollectorUnavailable = !laundry.data.quality.collectorHealthy;
 
@@ -78,66 +76,22 @@ function HomeLaundrySummary() {
         >
             {laundryCollectorUnavailable ? (
                 <p className="text-xs text-destructive">
-                    수집 서버 장애로 마지막 정상 상태를 표시합니다.
+                    수집 서버 장애로 마지막 확인 상태를 표시합니다.
                 </p>
             ) : laundryRefreshFailed ? (
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                    최신 상태를 가져오지 못해 마지막 확인값을 표시합니다.
+                    최신 상태를 가져오지 못해 마지막 확인 상태를 표시합니다.
                 </p>
             ) : null}
-            {laundry.data.machines.length === 0 ? (
-                <p className="text-sm leading-6 text-muted-foreground">
-                    {laundryRefreshFailed
-                        ? '마지막으로 확인한 데이터에 표시할 워시타워가 없습니다.'
-                        : '표시할 워시타워 정보가 아직 없습니다.'}
-                </p>
-            ) : (
-                <div className="grid grid-cols-2 gap-2">
-                    <div
-                        className={cn(
-                            'rounded-lg border p-3',
-                            laundryZonePresentation('men').surfaceClassName,
-                        )}
-                    >
-                        <p className="text-xs font-medium">남성 가능</p>
-                        <p className="mt-1 flex items-baseline gap-2">
-                            <strong className="text-2xl text-foreground">
-                                {laundrySummary.men === null ? '—' : `${laundrySummary.men}회`}
-                            </strong>
-                            {laundrySummary.men === null ? null : (
-                                <span className="text-xs text-muted-foreground">
-                                    지금 시작 가능
-                                </span>
-                            )}
-                        </p>
-                    </div>
-                    <div
-                        className={cn(
-                            'rounded-lg border p-3',
-                            laundryZonePresentation('women').surfaceClassName,
-                        )}
-                    >
-                        <p className="text-xs font-medium">여성 가능</p>
-                        <p className="mt-1 flex items-baseline gap-2">
-                            <strong className="text-2xl text-foreground">
-                                {laundrySummary.women === null ? '—' : `${laundrySummary.women}회`}
-                            </strong>
-                            {laundrySummary.women === null ? null : (
-                                <span className="text-xs text-muted-foreground">
-                                    지금 시작 가능
-                                </span>
-                            )}
-                        </p>
-                    </div>
-                </div>
-            )}
+            {renderGrid?.(laundry.data, now)}
         </SummaryCard>
     );
 }
 
 function HomeMealsSummary() {
+    const now = useHomeClock();
     const meals = useSuspenseMealsQuery();
-    const todayMealSlots = homeTodayMealSlots(meals.data);
+    const todayMealSlots = homeTodayMealSlots(meals.data, new Date(now));
     const mealsRefreshFailed = meals.isError;
 
     return (
@@ -157,28 +111,29 @@ function HomeMealsSummary() {
                     최신 급식을 가져오지 못해 마지막 확인값을 표시합니다.
                 </p>
             ) : null}
-            {todayMealSlots === null ? (
-                <p className="text-sm leading-6 text-muted-foreground">
-                    {mealsRefreshFailed
-                        ? '마지막으로 확인한 데이터에는 오늘 급식이 없습니다.'
-                        : '오늘 급식이 아직 게시되지 않았습니다.'}
-                </p>
-            ) : (
-                <HomeMealSlotsList slots={todayMealSlots} />
-            )}
+            <HomeMealSlotsList slots={todayMealSlots} />
         </SummaryCard>
     );
 }
 
-function HomeLivingSummaries() {
+function useHomeClock() {
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 30_000);
+        return () => clearInterval(timer);
+    }, []);
+    return now;
+}
+
+function HomeLivingSummaries({renderGrid}: {renderGrid?: LaundryGridRenderer}) {
     return (
-        <section className="grid gap-4 lg:grid-cols-2" aria-label="오늘의 생활 정보">
+        <section className="grid gap-6" aria-label="오늘의 생활 정보">
             <AsyncBoundary
                 errorTitle="세탁실 요약을 불러오지 못했습니다."
                 errorDescription="급식 요약은 계속 확인할 수 있습니다. 세탁실 정보만 다시 시도해 주세요."
                 fallback={<LoadingState label="세탁실 요약을 불러오는 중" />}
             >
-                <HomeLaundrySummary />
+                <HomeLaundrySummary renderGrid={renderGrid} />
             </AsyncBoundary>
             <AsyncBoundary
                 errorTitle="급식 요약을 불러오지 못했습니다."
@@ -191,10 +146,10 @@ function HomeLivingSummaries() {
     );
 }
 
-export function HomePage() {
+export function HomePage({renderLaundryGrid}: {renderLaundryGrid?: LaundryGridRenderer}) {
     const {platform} = useDashboardEnvironment();
     const refreshHome = useRefreshHomeMutation();
-    const showAttendanceSummary = platform.kind === 'desktop' || platform.pwa.installed;
+    const showAttendanceSummary = platform.kind === 'desktop';
 
     return (
         <div className="space-y-6">
@@ -217,11 +172,12 @@ export function HomePage() {
                 }
             />
 
-            {platform.kind === 'browser' && !platform.pwa.installed ? (
-                <ServiceEndNoticeBanner />
-            ) : null}
+            <p className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                <strong className="font-medium text-foreground">임시 운영 중</strong>
+                {' · '}현재 임시 운영 중입니다. 세탁실과 급식 정보를 웹에서 제공합니다.
+            </p>
 
-            <HomeLivingSummaries />
+            <HomeLivingSummaries renderGrid={renderLaundryGrid} />
 
             {refreshHome.isError ? (
                 <Alert variant="destructive">
@@ -241,7 +197,7 @@ export function HomePage() {
                 </Alert>
             ) : null}
 
-            {showAttendanceSummary ? <JungleCampusSummary /> : <AppShowcaseCard />}
+            {showAttendanceSummary ? <JungleCampusSummary /> : null}
         </div>
     );
 }

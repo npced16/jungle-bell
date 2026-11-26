@@ -9,7 +9,13 @@ import {effectiveAttendanceDate} from '@/domain/attendance/attendance-day';
 import {ATTENDANCE_FRESHNESS_MS} from '@/domain/attendance/freshness';
 import {laundryCapacity} from '@/domain/laundry/capacity';
 import {laundrySituationDataIsReliable} from '@/domain/laundry/freshness';
-import {mealPeriodLabel as sharedMealPeriodLabel, selectTodayMeals} from '@/domain/meals/today';
+import {laundryAvailabilityState} from '@/domain/laundry/status';
+import {
+    kstDateKey,
+    mealServiceDate,
+    mealRecordPeriod,
+    selectTodayMeals,
+} from '@/domain/meals/today';
 
 export interface LaundryHomeSummary {
     men: number | null;
@@ -73,6 +79,36 @@ export function homeLaundrySummary(input: {
     return capacity;
 }
 
+export function homeLaundryAvailability(
+    snapshot: DashboardLaundrySnapshot,
+    nowMs = Date.now(),
+    fetchFailed = false,
+) {
+    const reliable =
+        !fetchFailed &&
+        snapshot.quality.collectorHealthy &&
+        snapshot.quality.collection === 'SUCCESS' &&
+        laundrySituationDataIsReliable({
+            hasData: snapshot.machines.length > 0,
+            error: null,
+            sourceFreshness: snapshot.quality.sourceFreshness,
+            expectedRefreshIntervalSeconds: snapshot.quality.expectedRefreshIntervalSeconds,
+            snapshotSavedAt: Date.parse(snapshot.asOf),
+            nowMs,
+        });
+    const count = (type: 'washer' | 'dryer') =>
+        snapshot.machines.filter(
+            (machine) => laundryAvailabilityState(machine[type]) === 'available',
+        ).length;
+    return {
+        reliable,
+        washerTotal: snapshot.machines.filter((machine) => machine.washer !== null).length,
+        dryerTotal: snapshot.machines.filter((machine) => machine.dryer !== null).length,
+        washers: reliable ? count('washer') : null,
+        dryers: reliable ? count('dryer') : null,
+    };
+}
+
 export function homeTodayMeals(
     snapshot?: DashboardMealsSnapshot,
     reference = new Date(),
@@ -101,6 +137,34 @@ export function homeTodayMealSlots(
     return [slot('중식'), slot('석식')];
 }
 
-export function mealPeriodLabel(meal: Pick<DashboardMealPost, 'title'>): string {
-    return sharedMealPeriodLabel(meal.title);
+export function mealPeriodLabel(meal: Pick<DashboardMealPost, 'title' | 'mealPeriod'>): string {
+    return mealRecordPeriod(meal);
+}
+
+export function homeRecentMeals(snapshot: DashboardMealsSnapshot, reference: Date) {
+    const unique = new Map(
+        [...snapshot.data.dailyMenus, ...snapshot.data.recentMenus].map((meal) => [meal.id, meal]),
+    );
+    const previous = [...unique.values()].filter((meal) => {
+        const date = mealServiceDate(meal, reference);
+        return (
+            date !== null &&
+            date < kstDateKey(reference) &&
+            ['중식', '석식'].includes(mealRecordPeriod(meal))
+        );
+    });
+    const date = previous
+        .map((meal) => mealServiceDate(meal, reference)!)
+        .sort()
+        .at(-1);
+    return {
+        date,
+        meals: previous
+            .filter((meal) => mealServiceDate(meal, reference) === date)
+            .sort(
+                (left, right) =>
+                    (mealRecordPeriod(left) === '중식' ? 0 : 1) -
+                    (mealRecordPeriod(right) === '중식' ? 0 : 1),
+            ),
+    };
 }

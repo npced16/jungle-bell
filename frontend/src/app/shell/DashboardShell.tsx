@@ -261,12 +261,14 @@ function SidebarCollapseControl() {
 }
 
 function ShellTopSpacer({
+    showPersonalTools,
     activeRoute,
     notificationPanelOpen,
     rememberNotificationTrigger,
     hasUnreadNotifications,
     notificationAriaLabel,
 }: {
+    showPersonalTools: boolean;
     activeRoute: DashboardRoute;
     notificationPanelOpen: boolean;
     rememberNotificationTrigger: (trigger: HTMLButtonElement) => void;
@@ -285,41 +287,43 @@ function ShellTopSpacer({
                 title="사이드바 메뉴 열기"
                 className="bg-background lg:hidden"
             />
-            <div className="ml-auto flex items-center gap-2 lg:hidden">
-                <SheetTrigger asChild>
+            {showPersonalTools ? (
+                <div className="ml-auto flex items-center gap-2 lg:hidden">
+                    <SheetTrigger asChild>
+                        <Button
+                            variant={notificationPanelOpen ? 'secondary' : 'outline'}
+                            size="icon-sm"
+                            className={cn(
+                                'bg-background',
+                                hasUnreadNotifications && !notificationPanelOpen
+                                    ? 'text-primary'
+                                    : undefined,
+                            )}
+                            aria-label={notificationAriaLabel}
+                            aria-haspopup="dialog"
+                            aria-expanded={notificationPanelOpen}
+                            data-dashboard-route="notifications"
+                            data-unread={hasUnreadNotifications || undefined}
+                            onClick={(event) => rememberNotificationTrigger(event.currentTarget)}
+                        >
+                            <NotificationIcon className="size-4" aria-hidden="true" />
+                        </Button>
+                    </SheetTrigger>
                     <Button
-                        variant={notificationPanelOpen ? 'secondary' : 'outline'}
+                        asChild
+                        variant={activeRoute === 'connections' ? 'secondary' : 'outline'}
                         size="icon-sm"
-                        className={cn(
-                            'bg-background',
-                            hasUnreadNotifications && !notificationPanelOpen
-                                ? 'text-primary'
-                                : undefined,
-                        )}
-                        aria-label={notificationAriaLabel}
-                        aria-haspopup="dialog"
-                        aria-expanded={notificationPanelOpen}
-                        data-dashboard-route="notifications"
-                        data-unread={hasUnreadNotifications || undefined}
-                        onClick={(event) => rememberNotificationTrigger(event.currentTarget)}
+                        className="bg-background"
+                        aria-label="설정"
+                        aria-current={activeRoute === 'connections' ? 'page' : undefined}
+                        data-dashboard-route="connections"
                     >
-                        <NotificationIcon className="size-4" aria-hidden="true" />
+                        <Link to={dashboardRoutePath('connections')}>
+                            <Settings className="size-4" aria-hidden="true" />
+                        </Link>
                     </Button>
-                </SheetTrigger>
-                <Button
-                    asChild
-                    variant={activeRoute === 'connections' ? 'secondary' : 'outline'}
-                    size="icon-sm"
-                    className="bg-background"
-                    aria-label="설정"
-                    aria-current={activeRoute === 'connections' ? 'page' : undefined}
-                    data-dashboard-route="connections"
-                >
-                    <Link to={dashboardRoutePath('connections')}>
-                        <Settings className="size-4" aria-hidden="true" />
-                    </Link>
-                </Button>
-            </div>
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -358,9 +362,11 @@ export function DashboardShell({
     notificationPanel,
     children,
 }: DashboardShellProps) {
-    const sidebarRoutes = dashboardNavigationRoutes();
-    const bottomRoutes = dashboardNavigationRoutes();
-    const utilityRoutes = dashboardUtilityRoutes();
+    const sidebarRoutes = dashboardNavigationRoutes().filter(
+        (route) => platform !== 'browser' || route !== 'attendance',
+    );
+    const bottomRoutes = sidebarRoutes;
+    const utilityRoutes = platform === 'browser' ? [] : dashboardUtilityRoutes();
     const normalizedUnreadCount = Math.max(0, unreadCount);
     const hasUnreadNotifications = normalizedUnreadCount > 0;
     const notificationAriaLabel = hasUnreadNotifications
@@ -447,6 +453,7 @@ export function DashboardShell({
 
                 <SidebarInset id="dashboard-content" tabIndex={-1} className="min-w-0 bg-muted/35">
                     <ShellTopSpacer
+                        showPersonalTools={platform !== 'browser'}
                         activeRoute={activeRoute}
                         notificationPanelOpen={notificationPanelOpen}
                         rememberNotificationTrigger={rememberNotificationTrigger}

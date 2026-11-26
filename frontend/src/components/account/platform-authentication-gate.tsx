@@ -2,7 +2,6 @@ import {useMutation} from '@tanstack/react-query';
 import {Link, useRouterState} from '@tanstack/react-router';
 import {
     CircleAlert,
-    Download,
     ExternalLink as ExternalLinkIcon,
     LogIn,
     RefreshCw,
@@ -137,9 +136,9 @@ function RetryAction({fetching, retry}: {fetching: boolean; retry: () => void}) 
 function WebPersonalGate({showCompassLink}: {showCompassLink: boolean}) {
     return (
         <GatePanel
-            icon={<Download aria-hidden="true" className="size-5" />}
-            title="앱 설치가 필요합니다."
-            description="출석과 개인 알림은 PC 앱 또는 홈 화면에 설치한 PWA에서 사용할 수 있습니다. 앱 설치 안내를 확인하세요."
+            icon={<CircleAlert aria-hidden="true" className="size-5" />}
+            title="웹에서는 개인 기능을 제공하지 않습니다."
+            description="이 웹사이트에서는 공개 세탁실 현황과 급식 정보를 확인할 수 있습니다."
             actions={
                 <>
                     {showCompassLink ? (
@@ -149,9 +148,6 @@ function WebPersonalGate({showCompassLink}: {showCompassLink: boolean}) {
                             </ExternalLink>
                         </Button>
                     ) : null}
-                    <Button asChild size="sm">
-                        <Link to="/install">앱 설치 안내</Link>
-                    </Button>
                     <PublicHomeAction />
                 </>
             }

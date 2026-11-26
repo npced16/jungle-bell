@@ -1,140 +1,51 @@
-> 정글벨이 어떻게 시작되고 발전해 왔는지 궁금하시다면 [개발 여정](journey.md)을 읽어보세요.
+# Jungle Bell
+
+> **임시 운영 중**
+>
+> 현재 세탁실과 급식 정보를 웹에서 임시로 제공합니다.
+> **[웹사이트 열기](https://jungle-bell.vercel.app)**
 
 <p align="center">
   <img src="docs/assets/readme/logo.png" width="96" alt="Jungle Bell">
 </p>
 
-<h1 align="center">Jungle Bell</h1>
+크래프톤 정글의 공개 생활 정보를 로그인 없이 확인하는 웹사이트입니다.
+현재 운영 저장소는 [npced16/jungle-bell](https://github.com/npced16/jungle-bell)입니다.
 
-<p align="center">
-  크래프톤 정글의 생활 정보를 어디서나 편하게 확인하세요.
-</p>
+## 현재 제공하는 화면
 
-<div align="center">
-  <a href="https://github.com/YangSiJun528/jungle-bell/releases"><img src="https://img.shields.io/github/v/release/YangSiJun528/jungle-bell?include_prereleases" alt="GitHub Release"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/YangSiJun528/jungle-bell" alt="License"></a>
-  <a href="https://github.com/YangSiJun528/jungle-bell"><img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey" alt="Platform"></a>
-</div>
+- **홈 세탁실:** 워시타워 번호별 세탁기·건조기 상태와 남은 시간을 세탁실 화면과 같은 상태표로 표시합니다.
+- **홈 오늘 급식:** 오늘 중식·석식의 사진과 본문을 표시합니다. 아직 게시되지 않은 식사는 카드 틀과 식사 구분을 유지하고 사진 영역을 비워 둡니다. 지난 메뉴를 오늘 메뉴 대신 표시하지 않습니다.
+- **급식 게시물:** 카카오채널의 주간 식단표·중식·석식·기타 게시물을 구분하고, 저장된 사진·본문·원문 링크를 제공합니다.
+- **세탁실 상세:** 기기별 상태와 수집 상태를 확인할 수 있습니다. 수집이 지연되거나 실패하면 마지막 확인 상태와 안내를 표시합니다.
 
-## 주요 기능
+현재 서비스는 **웹만 운영**합니다. 앱 설치·출석·개인 알림·앱 릴리즈 배포는 현재 제공 범위에 포함하지 않습니다. 웹의 새 버전 알림도 표시하지 않으며, 변경 사항은 새 방문이나 새로고침으로 반영됩니다.
 
-- **출석:** PC 앱이 Jungle Campus 출석 상태를 확인하고 PC와 연결된 PWA 앱에 동기화합니다.
-- **세탁실:** 세탁기·건조기의 사용 가능 여부, 남은 시간과 예상 종료 시각을 확인합니다.
-- **식단:** 오늘의 중식·석식, 이번 주 식단표와 최근 식단 기록을 확인합니다.
-- **알림:** 출석 시간대·식사 시간·세탁 종료 또는 사용 가능 시점에 맞춰 알려 주어 필요한 확인을 놓치지 않게 합니다.
+## 데이터와 운영 구조
 
-## 실제 화면
+- 웹 화면은 **Vercel**에서 제공합니다.
+- 공개 데이터 API와 수집 작업은 **Supabase Edge Functions**, 저장소는 **Supabase 데이터베이스**를 사용합니다.
+- 급식은 [카카오채널 게시물](https://pf.kakao.com/_xhzNjn/posts)을 **5분 간격**으로 수집해 게시물과 이미지 정보를 저장합니다. 사진에 없는 메뉴를 생성하거나 추정하지 않습니다.
+- 화면의 정보는 수집 시점 기준이며 원본 게시나 기기 상태 변경이 즉시 반영되지 않을 수 있습니다.
 
-<table width="100%">
-  <tr>
-    <th width="33%" align="center">출석</th>
-    <th width="33%" align="center">세탁실</th>
-    <th width="33%" align="center">급식</th>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="docs/assets/readme/desktop-attendance.png"><img src="docs/assets/readme/desktop-attendance.png" height="200" alt="PC 앱의 출석 상태와 수료일까지 남은 날"></a>
-    </td>
-    <td align="center">
-      <a href="docs/assets/readme/desktop-laundry.png"><img src="docs/assets/readme/desktop-laundry.png" height="200" alt="PC 앱의 세탁실 현황"></a>
-    </td>
-    <td align="center">
-      <a href="docs/assets/readme/desktop-meals.png"><img src="docs/assets/readme/desktop-meals.png" height="200" alt="PC 앱의 오늘 급식"></a>
-    </td>
-  </tr>
-</table>
+저장소에는 이전 PC·PWA 및 서버 구현도 남아 있습니다. 이 코드는 보존된 개발 자산이며, 현재 웹 서비스에서 해당 기능을 운영한다는 뜻은 아닙니다.
 
-### 트레이 상태 변화
+## 피드백
 
-<table>
-  <tr>
-    <td width="33%" align="center">
-      <a href="docs/assets/readme/desktop-tray-studying.png"><img src="docs/assets/readme/desktop-tray-studying-focus.svg" alt="학습 중인 트레이 아이콘과 종료 가능까지 남은 시간 툴팁"></a>
-    </td>
-    <td width="33%" align="center">
-      <a href="docs/assets/readme/desktop-tray-warning.png"><img src="docs/assets/readme/desktop-tray-warning-focus.svg" alt="지각 임박을 알리는 빨간 트레이 아이콘과 툴팁"></a>
-    </td>
-    <td width="33%" align="center">
-      <a href="docs/assets/readme/desktop-tray-complete.png"><img src="docs/assets/readme/desktop-tray-complete-focus.svg" alt="오늘 출석 완료 상태의 트레이 아이콘과 툴팁"></a>
-    </td>
-  </tr>
-</table>
+[버그 제보](https://github.com/npced16/jungle-bell/issues/new?template=bug.yml) · [기능 개선 및 피드백](https://github.com/npced16/jungle-bell/issues/new?template=feature_request.yml) · [질문](https://github.com/npced16/jungle-bell/issues/new?template=question.yml)
 
-### PWA 앱 화면
-
-<table width="100%">
-  <tr>
-    <td width="33%" align="center">
-      <a href="docs/assets/readme/ios-home-screen.webp"><img src="docs/assets/readme/ios-home-screen.webp" height="200" alt="iPhone 홈 화면에 추가된 Jungle Bell 아이콘"></a>
-    </td>
-    <td width="33%" align="center">
-      <a href="docs/assets/readme/ios-notifications.webp"><img src="docs/assets/readme/ios-notifications.webp" height="200" alt="iOS 알림센터에 표시된 학습 종료 확인, 세탁 종료 5분 전, 석식 알림"></a>
-    </td>
-    <td width="33%" align="center">
-      <a href="docs/assets/readme/ios-home.png"><img src="docs/assets/readme/ios-home.png" height="200" alt="휴대폰에서 세탁실과 오늘 급식을 확인하는 Jungle Bell 대시보드"></a>
-    </td>
-  </tr>
-</table>
-
-## 설치
-
-각 운영체제에 맞는 명령어를 수행해 주세요.
-
-만약 PC 앱 수동 설치를 원하는 경우 [최신 Release](https://github.com/YangSiJun528/jungle-bell/releases/latest)를 확인하세요.
-
-### macOS
-
-아래 명령어를 터미널에서 실행해 Jungle Bell을 설치하세요.
-
-```bash
-curl -fsSL https://install.sijun-yang.com/jungle-bell.sh/latest | sh
-```
-
-### Windows
-
-아래 명령어를 PowerShell에서 실행해 Jungle Bell을 설치하세요.
-
-```powershell
-irm https://install.sijun-yang.com/jungle-bell.ps1/latest | iex
-```
-
-### 웹/PWA
-
-웹·PWA는 [jungle-bell.sijun-yang.com](https://jungle-bell.sijun-yang.com/)에서 바로 사용할 수 있습니다.
-
-일반 웹에서는 세탁·급식 정보를 확인할 수 있으며, 출석·알림 기능은 제공하지 않습니다. 출석·알림은 PWA를 설치하고 PC 앱과 연결하면 사용할 수 있습니다.
-
-## 동작 방식
-
-```mermaid
-flowchart LR
-    Campus["Jungle Campus"] <-->|"로그인·출석 확인"| PC["PC 앱"]
-    Sources["급식·세탁 공개 데이터"] --> Server["Jungle Bell 서버<br/>수집 · 동기화 · 알림"]
-    PC -->|"정규화한 출석 상태"| Server
-    Server -->|"공개 생활 정보"| Web["일반 웹"]
-    Server -->|"출석·설정 동기화<br/>Web Push"| PWA["설치형 PWA"]
-```
-
-- PC 앱은 Jungle Campus에서 출석 상태를 확인해 서버와 동기화합니다.
-- 일반 웹은 로그인 없이 공개 급식·세탁 정보를 조회합니다.
-- 설치형 PWA는 연결된 PC가 동기화한 출석 상태와 개인 알림을 받습니다.
-- PC 앱이 종료되거나 컴퓨터가 잠자기 상태면 출석 정보가 갱신되지 않습니다.
-
-## 피드백 주기
-
-> [!CAUTION]
-> Jungle Bell은 크래프톤 정글 공식 앱이 아니며 자동 출석 기능을 제공하지 않습니다.
-
-[버그 제보](https://github.com/YangSiJun528/jungle-bell/issues/new?template=bug.yml) · [기능 개선](https://github.com/YangSiJun528/jungle-bell/issues/new?template=feature_request.yml) · [질문](https://github.com/YangSiJun528/jungle-bell/issues/new?template=question.yml)
-
-## 기여하기
-
-[기여 안내](CONTRIBUTING.md)를 확인해 주세요.
+공개 이슈에 개인정보나 인증 정보를 올리지 마세요. Jungle Bell은 크래프톤 정글의 공식 서비스가 아닙니다.
 
 ## 개인정보 처리방침
 
-[웹에서 확인하기](https://jungle-bell.sijun-yang.com/#/privacy)
+[웹에서 확인하기](https://jungle-bell.vercel.app/#/privacy)
+
+## 개발과 원 프로젝트
+
+개발 방법은 [기여 안내](CONTRIBUTING.md)를 참고하세요. 기존 플랫폼 문서에는 현재 운영 범위 밖의 기능도 설명되어 있습니다.
+
+이 저장소는 [YangSiJun528/jungle-bell](https://github.com/YangSiJun528/jungle-bell)을 바탕으로 현재 웹 운영에 맞게 변경한 프로젝트입니다. 원 프로젝트의 저작권과 기여를 존중하며, 원저자를 현재 임시 서비스의 운영자로 표시하지 않습니다. 원 프로젝트의 시작과 발전 과정은 [개발 여정](journey.md)에 보존되어 있습니다.
 
 ## 라이선스
 
-[Apache License 2.0](LICENSE)
+[Apache License 2.0](LICENSE). 원 프로젝트의 라이선스와 저작권 고지를 유지합니다.

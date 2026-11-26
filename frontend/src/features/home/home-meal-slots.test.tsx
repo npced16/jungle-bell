@@ -5,6 +5,40 @@ import {HomeMealSlotsList} from './home-meal-slots';
 import type {HomeMealSlots} from './home-view-model';
 
 describe('HomeMealSlotsList', () => {
+    it('오늘 메뉴의 사진과 전체 본문을 함께 표시한다', () => {
+        const image = {
+            sha: 'a'.repeat(64),
+            url: `https://jungle-bell.vercel.app/api/public/assets/${'a'.repeat(64)}.jpg`,
+            contentType: 'image/jpeg' as const,
+            extension: 'jpg' as const,
+            width: 800,
+            height: 1200,
+            byteLength: 500,
+        };
+        const html = renderToStaticMarkup(
+            <HomeMealSlotsList
+                slots={[
+                    {
+                        period: '중식',
+                        meal: {
+                            id: 'today',
+                            title: null,
+                            text: '원문 전체 메뉴',
+                            publishedAt: null,
+                            permalink: null,
+                            images: [image],
+                        },
+                    },
+                    {period: '석식', meal: null},
+                ]}
+            />,
+        );
+        expect(html).toContain('<img');
+        expect(html).toContain(image.url);
+        expect(html).toContain('원문 전체 메뉴');
+        expect(html).toContain('object-contain');
+        expect(html).not.toContain('line-clamp-2 font-medium');
+    });
     it('keeps lunch above dinner and shows a visible empty state for a missing meal', () => {
         const slots: HomeMealSlots = [
             {
@@ -66,6 +100,6 @@ describe('HomeMealSlotsList', () => {
 
         expect(html).not.toContain('data-slot="skeleton"');
         expect(html).not.toContain('data-meal-state="empty"');
-        expect(html).not.toContain('아직 올라오지 않았습니다');
+        expect(html).not.toContain('data-meal-empty="true"');
     });
 });

@@ -1,8 +1,9 @@
 import {useMutation} from '@tanstack/react-query';
-import {useNavigate, useSearch} from '@tanstack/react-router';
+import {Link, useNavigate, useSearch} from '@tanstack/react-router';
 import {lazy, useCallback, useEffect, useState} from 'react';
 
 import type {MobilePairingLink} from '@/domain/connections/pairing-link';
+import {WashTowerGrid} from '@/features/laundry/components/wash-tower-grid';
 import type {ConnectionsTab} from '@/navigation/routes';
 import {useDashboardEnvironment} from '@/state/dashboard-context';
 import {clearInitialPairingEntry, readInitialPairingEntry} from '@/state/pairing-bootstrap';
@@ -47,7 +48,22 @@ const AppInstallPage = lazy(() =>
 );
 
 export function HomeRoutePage() {
-    return <HomePage />;
+    return <HomePage renderLaundryGrid={(snapshot, now) => <WashTowerGrid machines={snapshot.machines} nowMs={now} />} />;
+}
+
+export function WebServiceNotice() {
+    return (
+        <section className="space-y-4">
+            <h1 className="text-xl font-semibold">웹 생활 정보 안내</h1>
+            <p>
+                이 웹사이트에서는 공개 세탁실 현황과 급식 정보를 제공합니다. 앱 설치와 출석 기능은
+                제공하지 않습니다.
+            </p>
+            <Link to="/" className="text-primary underline">
+                홈으로 돌아가기
+            </Link>
+        </section>
+    );
 }
 
 export function AppInstallRoutePage() {
@@ -78,6 +94,8 @@ export function AppInstallRoutePage() {
           : prepareHandoff.isSuccess
             ? 'ready'
             : 'preparing';
+    if (platform.kind === 'browser' && !handoffLink && !platform.pwa.installed)
+        return <WebServiceNotice />;
     return (
         <AppInstallPage
             onRequestMobileInstall={canRequestMobileInstall ? openInstallPrompt : undefined}
@@ -91,6 +109,8 @@ export function AppInstallRoutePage() {
 }
 
 export function AttendanceRoutePage() {
+    const {platform} = useDashboardEnvironment();
+    if (platform.kind === 'browser') return <WebServiceNotice />;
     return <AttendancePage />;
 }
 
@@ -103,6 +123,7 @@ export function MealsRoutePage() {
 }
 
 export function ConnectionsRoutePage() {
+    const {platform} = useDashboardEnvironment();
     const search = useSearch({from: '/connections'});
     const navigate = useNavigate({from: '/connections'});
     const selectTab = useCallback(
@@ -112,6 +133,7 @@ export function ConnectionsRoutePage() {
         [navigate],
     );
 
+    if (platform.kind === 'browser' && !platform.pwa.installed) return <WebServiceNotice />;
     return (
         <AppStatusPage onOpenTab={selectTab}>
             {({content, warningCount}) => (

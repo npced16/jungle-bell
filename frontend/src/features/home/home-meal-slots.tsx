@@ -1,27 +1,24 @@
+import {MealPostCard, MissingMealPostCard} from '@/components/dashboard/meal-post-card';
+
 import type {HomeMealSlots} from './home-view-model';
 
-export function HomeMealSlotsList({slots}: {slots: HomeMealSlots}) {
+export function HomeMealSlotsList({slots}: {slots: HomeMealSlots | null}) {
+    const visibleSlots: HomeMealSlots = slots ?? [{period: '중식', meal: null}, {period: '석식', meal: null}];
     return (
-        <ul className="divide-y overflow-hidden rounded-lg border" aria-label="오늘 중식과 석식">
-            {slots.map(({period, meal}) => (
+        <ul className="grid items-start gap-4 md:grid-cols-2" aria-label="오늘 중식과 석식">
+            {visibleSlots.map(({period, meal}) => (
                 <li
                     data-meal-empty={meal === null}
                     data-meal-period={period}
                     data-meal-state={meal ? 'published' : 'empty'}
-                    className={
-                        meal
-                            ? 'grid min-h-14 grid-cols-[3rem_1fr] items-center gap-3 px-3 py-2 text-sm text-foreground'
-                            : 'grid min-h-14 grid-cols-[3rem_1fr] items-center gap-3 bg-muted/40 px-3 py-2 text-sm text-muted-foreground'
-                    }
+                    className="min-w-0 space-y-3 text-foreground"
                     key={period}
                 >
-                    <strong className="text-primary">{period}</strong>
+                    {meal ? <strong className="text-primary">{period}</strong> : null}
                     {meal ? (
-                        <span className="line-clamp-2 font-medium whitespace-pre-line text-foreground">
-                            {meal.text || meal.title || '메뉴 준비 중'}
-                        </span>
+                        <MealPostCard meal={meal} eagerImage hideImage={(meal.images?.length ?? 0) === 0} />
                     ) : (
-                        <span className="text-muted-foreground">아직 올라오지 않았습니다</span>
+                        <MissingMealPostCard period={period} blankImage />
                     )}
                 </li>
             ))}

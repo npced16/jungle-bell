@@ -1,3 +1,5 @@
+import {readFileSync} from 'node:fs';
+
 import {describe, expect, it, vi} from 'vitest';
 
 import type {NativeInvoke} from '@/platform/contracts';
@@ -5,6 +7,22 @@ import type {NativeInvoke} from '@/platform/contracts';
 import {createTauriExternalLinkAdapter, normalizeExternalUrl} from './external-links';
 
 describe('TauriExternalLinkAdapter', () => {
+    it('새 공식 alias는 공개 asset 경로에만 native opener 권한을 부여한다', () => {
+        const capability = JSON.parse(
+            readFileSync(
+                new URL('../../../../desktop/capabilities/dashboard.json', import.meta.url),
+                'utf8',
+            ),
+        );
+        const opener = capability.permissions.find(
+            (permission: {identifier?: string}) =>
+                permission.identifier === 'opener:allow-open-url',
+        );
+        expect(opener.allow.filter(({url}: {url: string}) => url.includes('vercel.app'))).toEqual([
+            {url: 'https://jungle-bell.vercel.app/api/public/assets/*'},
+        ]);
+    });
+
     it.each([
         'https://github.com/YangSiJun528/jungle-bell',
         'https://github.com/YangSiJun528/jungle-bell#%EC%84%A4%EC%B9%98',
@@ -14,6 +32,7 @@ describe('TauriExternalLinkAdapter', () => {
         'https://pf.kakao.com/_xhzNjn/posts',
         'https://pf.kakao.com/_xhzNjn/114222378',
         `https://jungle-bell.sijun-yang.com/api/public/assets/${'a'.repeat(64)}.webp`,
+        `https://jungle-bell.vercel.app/api/public/assets/${'b'.repeat(64)}.jpg`,
     ])('허용된 HTTPS 목적지만 정규화한다: %s', (url) => {
         expect(normalizeExternalUrl(url)).toBe(url);
     });
@@ -28,6 +47,11 @@ describe('TauriExternalLinkAdapter', () => {
     it.each([
         'http://github.com/YangSiJun528/jungle-bell',
         'javascript:alert(1)',
+        `https://jungle-bell-preview.vercel.app/api/public/assets/${'a'.repeat(64)}.jpg`,
+        `https://jungle-bell.vercel.app/api/public/assets/${'a'.repeat(63)}.jpg`,
+        `https://jungle-bell.vercel.app/api/public/assets/${'a'.repeat(64)}.html`,
+        `https://jungle-bell.vercel.app/api/public/assets/${'a'.repeat(64)}.jpg?download=1`,
+        `https://jungle-bell.vercel.app/api/public/assets/${'a'.repeat(64)}.jpg#fragment`,
         'https://evil.example/YangSiJun528/jungle-bell',
         'https://github.com.evil.example/YangSiJun528/jungle-bell',
         'https://user:pass@github.com/YangSiJun528/jungle-bell',

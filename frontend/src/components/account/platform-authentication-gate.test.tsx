@@ -147,8 +147,8 @@ describe('PlatformAuthenticationGate', () => {
     test('일반 Web의 개인 기능은 설치 행동과 공개 홈 복귀를 제공한다', () => {
         const markup = renderGate({authentication: 'none'});
 
-        expect(markup).toContain('앱 설치가 필요합니다.');
-        expect(markup).toContain('href="/install"');
+        expect(markup).toContain('웹에서는 개인 기능을 제공하지 않습니다.');
+        expect(markup).not.toContain('href="/install"');
         expect(markup).toContain('href="/home"');
         expect(markup).not.toContain('data-route-content');
         expect(routeRenderCount).toBe(0);
@@ -160,7 +160,7 @@ describe('PlatformAuthenticationGate', () => {
         expect(markup).toContain('data-personal-access-route-frame="true"');
         expect(markup).toContain('<h1');
         expect(markup).toContain('출석</h1>');
-        expect(markup).toContain('앱 설치가 필요합니다.');
+        expect(markup).toContain('웹에서는 개인 기능을 제공하지 않습니다.');
     });
 
     test('일반 웹 출석에서 개인 본문을 실행하지 않고 Compass 새 탭 링크를 제공한다', () => {
@@ -169,7 +169,7 @@ describe('PlatformAuthenticationGate', () => {
         expect(markup).toMatch(
             /<a[^>]*href="https:\/\/jungle-lms\.krafton\.com\/check-in"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>Compass 열기/u,
         );
-        expect(markup).toContain('href="/install"');
+        expect(markup).not.toContain('href="/install"');
         expect(markup).not.toContain('data-route-content');
         expect(routeRenderCount).toBe(0);
     });

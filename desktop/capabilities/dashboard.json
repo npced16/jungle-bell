@@ -18,6 +18,9 @@
         { "url": "https://pf.kakao.com/_xhzNjn/*" },
         {
           "url": "https://jungle-bell.sijun-yang.com/api/public/assets/*"
+        },
+        {
+          "url": "https://jungle-bell.vercel.app/api/public/assets/*"
         }
       ]
     },

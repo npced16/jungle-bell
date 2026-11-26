@@ -83,8 +83,8 @@ describe('PersonalAccountGate browser policy', () => {
     test('일반 Web의 독립 개인 화면은 앱 설치 안내로 이동한다', () => {
         const markup = renderGate('unconnected');
 
-        expect(markup).toContain('앱 설치가 필요합니다.');
-        expect(markup).toContain('href="/install"');
+        expect(markup).toContain('웹에서는 개인 기능을 제공하지 않습니다.');
+        expect(markup).not.toContain('href="/install"');
         expect(markup).toContain('href="/home"');
         expect(markup).not.toContain('개인 설정');
     });

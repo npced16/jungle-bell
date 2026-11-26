@@ -9,7 +9,7 @@ const productionSources = [
     '../../features/app-install/app-install-page.tsx',
     '../../features/attendance/attendance-page.tsx',
     '../../features/home/jungle-campus-summary.tsx',
-    '../../features/meals/components/meal-post-card.tsx',
+    '../../components/dashboard/meal-post-card.tsx',
     '../../features/meals/components/weekly-meal-menu.tsx',
     '../../components/pwa/install-prompt.tsx',
 ] as const;

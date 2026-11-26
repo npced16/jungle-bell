@@ -1,8 +1,20 @@
 # HTTP API 레퍼런스
 
 모든 JSON 요청은 알 수 없는 필드를 거부합니다. 오류 응답은 HTTP 상태와 안정적인
-`code`를 포함합니다. 서버 시각은 UTC ISO 8601, 영속 시각은 epoch milliseconds를
+오류 식별자를 `error` 필드에 포함합니다(`issues`는 없으면 `null`). 서버 시각은 UTC ISO 8601, 영속 시각은 epoch milliseconds를
 사용합니다.
+
+## Supabase 이전 후보
+
+[`server/supabase`](../supabase/README.md)는 아래 HTTP·opaque token 계약을 유지하는
+Edge Functions 구현입니다. 공식 origin은 `https://jungle-bell.sijun-yang.com`으로 유지하며,
+Vercel은 `/api/*`를 `/functions/v1/api/api/*`에 내부 rewrite합니다. redirect나 Supabase Auth
+JWT로 클라이언트 인증을 바꾸지 않습니다. 쿠키를 변경하는 요청에는 공식 웹 origin이 필요하며
+WebView의 exact Origin 인증은 아래 allowlist를 유지합니다.
+
+아래 Spring/Actuator/내장 SPA 설명은 기존 운영 서버에 해당합니다. Supabase에서는 정적 웹은
+Vercel, 운영 점검은 비공개 SQL·Edge Logs·Cron 결과가 담당하며 공개 Actuator endpoint는
+만들지 않습니다. migration 및 로컬 테스트 통과는 실제 이전 완료와 구분합니다.
 
 ## 요청 식별자
 
@@ -111,6 +123,21 @@ stale-while-revalidate를 사용합니다.
 
 이미지는 SHA-256 기반 immutable URL로 제공하며 `nosniff`와 cross-origin resource
 정책을 설정합니다. 조식 설정과 조식 알림은 존재하지 않습니다.
+
+Supabase API의 게시물에는 기존 `kind`와 함께 `category` (`WEEKLY_MENU`,
+`DAILY_MENU`, `OTHER`), `mealPeriod` (`LUNCH`, `DINNER`, `null`),
+`mealDate` (`YYYY-MM-DD` 또는 `null`)가 포함됩니다. 제목을 우선하고 제목이 비면
+본문 첫 유효 줄의 명시된 표현만 분류합니다. 고정 공지를 식단표로 간주하지 않고,
+중식·석식이 함께 쓰인 모호한 제목은 `OTHER`로 둡니다. 급식 날짜는 명시된 월·일만
+사용하며 연도가 없으면 게시물 수정·게시 시점에 가장 가까운 유효 연도를 선택합니다.
+날짜가 없거나 유효하지 않으면 `null`이며 게시일로 대체하지 않습니다.
+
+`data.weeklyPosts`는 주차가 명시되지 않은 식단표도 포함하고 `data.otherPosts`는
+카페·이용 안내 등 기타 소식을 포함합니다. 기존 `schemaVersion: 2`, `dailyMenus`,
+`pinnedMenus`, `recentMenus`, `currentWeeklyMenu`, `weeklyMenus`는 유지합니다.
+본문·전체 이미지 배열·카카오 원문 링크를 보존하며 카카오의 HTTP 원문 링크는 HTTPS로
+제공합니다. 이미지 바이트는 DB에 저장하며 SHA-256으로 중복 저장을 방지합니다.
+수집은 기존 5분 주기와 진행 중 게시물 배치의 10초 후속 작업을 사용합니다.
 
 ## PC 등록과 동기화
 

@@ -70,9 +70,9 @@ describe('DashboardShell', () => {
         expect(html).toContain('data-dashboard-shell="renewal"');
         expect(html).toContain('data-dashboard-platform="browser"');
         expect(html).toContain('data-dashboard-route="laundry"');
-        expect(html).toContain('data-dashboard-route="attendance"');
-        expect(html).toContain('data-dashboard-route="notifications"');
-        expect(html).toContain('data-dashboard-route="connections"');
+        expect(html).not.toContain('data-dashboard-route="attendance"');
+        expect(html).not.toContain('data-dashboard-route="notifications"');
+        expect(html).not.toContain('data-dashboard-route="connections"');
         expect(html).toContain('data-slot="sidebar"');
         expect(html).toContain('--sidebar-width:16rem');
         expect(html).toContain('data-sidebar-resizable="true"');
@@ -90,20 +90,18 @@ describe('DashboardShell', () => {
         expect(html).not.toContain(
             'Jungle Bell은 정글 캠퍼스 생활 정보를 한곳에 모아 보여주는 오픈소스 프로젝트입니다.',
         );
-        expect(html).toContain('href="https://github.com/YangSiJun528/jungle-bell"');
+        expect(html).toContain('href="https://github.com/npced16/jungle-bell"');
         expect(html).toContain(
-            'href="https://github.com/YangSiJun528/jungle-bell/issues/new/choose"',
+            'href="https://github.com/npced16/jungle-bell/issues/new?template=feature_request.yml"',
         );
-        expect(html).toContain(
-            'href="https://github.com/YangSiJun528/jungle-bell/releases/latest"',
-        );
+        expect(html).not.toContain('href="https://github.com/npced16/jungle-bell/releases/latest"');
         expect(html).toContain('공개 홈');
     });
 
     test('renders notification panel trigger, settings, and the standard sidebar controls', () => {
         const html = renderShell(
             <DashboardShell
-                platform="browser"
+                platform="desktop"
                 activeRoute="notifications"
                 navigate={vi.fn<(route: DashboardRoute) => void>()}
                 unreadCount={120}

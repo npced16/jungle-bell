@@ -1,0 +1,16 @@
+project_id = "jungle-bell"
+
+[functions.api]
+verify_jwt = false
+
+[functions.collect-laundry]
+verify_jwt = false
+
+[functions.collect-meals]
+verify_jwt = false
+
+[functions.automate]
+verify_jwt = false
+
+[functions.push]
+verify_jwt = false

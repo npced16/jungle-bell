@@ -26,7 +26,10 @@ const meal: DashboardMealPost = {
     ],
 };
 
-const source = readFileSync(new URL('./meal-post-card.tsx', import.meta.url), 'utf8');
+const source = readFileSync(
+    new URL('../../../components/dashboard/meal-post-card.tsx', import.meta.url),
+    'utf8',
+);
 
 describe('MealPostCard', () => {
     it('오늘 급식의 보관된 사진과 메뉴를 함께 표시한다', () => {

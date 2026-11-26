@@ -68,7 +68,7 @@ function DashboardContent() {
     }
 
     const contentRoute = notificationPanelBackgroundRoute(notificationBackgroundRoute, route);
-    const notificationPanelOpen = route === 'notifications' || notificationPanelRequestedOpen;
+    const notificationPanelOpen = platform.kind !== 'browser' && (route === 'notifications' || notificationPanelRequestedOpen);
 
     const navigate = useCallback(
         (next: DashboardRoute, replace = false) => {
@@ -131,8 +131,7 @@ function DashboardContent() {
                 ),
             }}
         >
-            <DesktopUpdateNotice />
-            <NotificationOnboardingNotice />
+            {platform.kind !== 'browser' ? <><DesktopUpdateNotice /><NotificationOnboardingNotice /></> : null}
             <DashboardRouteRuntimeProvider value={{contentRoute, openInstallPrompt}}>
                 <AsyncBoundary
                     resetKeys={[contentRoute]}
@@ -148,7 +147,7 @@ function DashboardContent() {
                     </PlatformAuthenticationGate>
                 </AsyncBoundary>
             </DashboardRouteRuntimeProvider>
-            <InstallPrompt open={installPromptOpen} onOpenChange={setInstallPromptVisibility} />
+            {platform.kind !== 'browser' ? <InstallPrompt open={installPromptOpen} onOpenChange={setInstallPromptVisibility} /> : null}
         </DashboardShell>
     );
 }

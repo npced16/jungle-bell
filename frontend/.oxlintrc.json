@@ -108,7 +108,7 @@
                 "src/components/dashboard/async-state.tsx",
                 "src/components/dashboard/dday-card.tsx",
                 "src/features/laundry/components/wash-tower-grid.tsx",
-                "src/features/meals/components/meal-post-card.tsx",
+                "src/components/dashboard/meal-post-card.tsx",
                 "src/features/meals/components/weekly-meal-menu.tsx"
             ],
             "rules": {
